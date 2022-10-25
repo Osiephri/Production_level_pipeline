@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: nginx-Deployment
+  labels:
+    app: nginx 
+spec: 
+  replicas: 3
+  selectors: 
+    matchLabels: 
+      app: nginx 
+  template: 
+    metadata: 
+      labels:
+        app: nginx 
+    spec:
+      containers:
+      - image: nginx
+        name:  nginx-site
+        ports:
+        - containerPort: 3000
+
+
+---
+apiVersion: v1
+kind: Service 
+metadata: 
+   name: sitek8s-service   
+spec: 
+  selector:
+    app: nginx
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 3000
+    nodePort: 32000
+
+
+
+
+
+
+

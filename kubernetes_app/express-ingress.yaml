@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: 
+  name: express-ingress
+  namespace: default
+  labels:
+    tier: ingress
+  annotations:
+    nginx.kubernetes.io/rewrite-target: \
+    nginx.kubernetes.io/use-regex: 'true'
+spec:
+  rules:
+  - host: "*.elb.amazonaws.com"
+    http:
+      paths:
+        - path: '/app/'
+          pathType: Exact
+          backend:
+            service:
+              name: mongo-express-services
+              port:
+                number: 8081
+                # a2afcb989ac744ca0a92b88719ba6c73-2028422691.eu-south-1.elb.amazonaws.com
