@@ -1,0 +1,81 @@
+pipeline{
+    agent any
+    environment{
+        // AWS_CREDENTIALS = crendentials('aws-credentials')
+        ADMIN_PASSWORD = credentials('admin_password') 
+        BRANCH_NAME="master"
+        DEPLOY_TO="production"
+        DOCKER_HUB=credentials('dockerhub')
+    }
+    parameter{
+        choices(choices:['dev','prod','uat'],name:"Environment")
+        password(name:'Admin_password')
+    }
+
+    stages{
+        stage('CheckOutCode'){
+            steps{
+                script{
+                    if ( "${params.Environment}" == 'dev'){
+                        sh "checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'github', url: 'https://github.com/Osiephri/Production_level_pipeline']]])"
+                    }
+                }
+            }
+
+
+
+            stage('Build image'){
+                steps{
+                    script{
+                    if ( "${params.Environment}" == 'dev' || env.BRANCH_NAME == 'main' || Admin_Password == ADMIN_PASSWORD){
+                        dir('kubernetes_app/Application_code/') {
+                            sh 
+                            ''' 
+                               docker version
+                               docker images
+                               docker build -t company_site:"${env.BUILD_ID}" .
+                            
+                            '''
+                            }
+                    }
+                }
+            }
+        }
+
+
+
+
+            stage('Push Image to hub'){
+                steps{
+                    script{
+                        if ( "${params.Environment}" == 'dev' || env.BRANCH_NAME == 'main'){
+                            withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                                sh 
+                                ''' 
+                                  
+                                  docker login -u $USER -p $PASS
+                                  docker tag company_site:"${env.BUILD_ID} scinet0786/production_pipeline:"${env.BUILD_ID}"
+                                  docker push scinet0786/production_pipeline:"${env.BUILD_ID}"
+
+                                '''
+                            }
+                        }
+                    }
+                }
+            }
+
+            stage('Build_CD_JOB'){
+                steps{
+                    script{
+                        def i = input(name:'CD_build',Message:'This ')
+                    }
+                }
+            }
+        }
+    }
+
+
+    post{
+
+    }
+}
